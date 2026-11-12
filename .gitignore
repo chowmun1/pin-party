@@ -1,0 +1,11 @@
+node_modules
+dist
+*.tsbuildinfo
+.vite
+coverage
+.remember/
+.DS_Store
+.impeccable
+.env
+.env.local
+.env.*.local
