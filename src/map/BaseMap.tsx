@@ -2,11 +2,12 @@ import type { ReactNode, Ref } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import type { LatLngExpression, Map as LeafletMap } from 'leaflet';
 import { InvalidateOnResize } from './MapControls';
+import { tileSource } from './tiles';
 
 export const WORLD_CENTER: LatLngExpression = [20, 0];
 export const WORLD_ZOOM = 2;
 
-/** OpenStreetMap world map shared by the editor, gameplay and reveal screens. */
+/** World map (tile source chosen in ./tiles.ts) shared by the editor, gameplay and reveal screens. */
 export function BaseMap({
   center = WORLD_CENTER,
   zoom = WORLD_ZOOM,
@@ -34,11 +35,7 @@ export function BaseMap({
         keyboard
         style={{ height: '100%', width: '100%' }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={19}
-        />
+        <TileLayer attribution={tileSource.attribution} url={tileSource.url} maxZoom={tileSource.maxZoom} />
         <InvalidateOnResize />
         {children}
       </MapContainer>

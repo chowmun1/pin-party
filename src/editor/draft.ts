@@ -5,6 +5,7 @@ export interface DraftPhoto {
   id: string;
   imageBlob: Blob;
   caption: string;
+  answerName: string;
   lat: number | null;
   lng: number | null;
   /** True if the pin was pre-filled from the photo's GPS data (and not moved since). */
@@ -21,7 +22,7 @@ export interface QuizDraft {
 
 export const TITLE_MAX = 80;
 export const DESCRIPTION_MAX = 300;
-export const CAPTION_MAX = 200;
+export { ANSWER_NAME_MAX, CAPTION_MAX } from '../config';
 
 export function emptyDraft(): QuizDraft {
   return { id: newId(), createdAt: Date.now(), title: '', description: '', photos: [] };
@@ -37,6 +38,7 @@ export function draftFromQuiz(quiz: Quiz): QuizDraft {
       id: p.id,
       imageBlob: p.imageBlob,
       caption: p.caption ?? '',
+      answerName: p.answerName ?? '',
       lat: p.lat,
       lng: p.lng,
     })),
@@ -73,7 +75,15 @@ export function draftToQuiz(d: QuizDraft): Quiz {
     photos: d.photos.map((p) => {
       if (p.lat === null || p.lng === null) throw new Error('Photo is missing its answer pin');
       const caption = p.caption.trim();
-      return { id: p.id, imageBlob: p.imageBlob, lat: p.lat, lng: p.lng, ...(caption ? { caption } : {}) };
+      const answerName = p.answerName.trim();
+      return {
+        id: p.id,
+        imageBlob: p.imageBlob,
+        lat: p.lat,
+        lng: p.lng,
+        ...(caption ? { caption } : {}),
+        ...(answerName ? { answerName } : {}),
+      };
     }),
   };
 }

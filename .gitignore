@@ -5,3 +5,7 @@ dist
 coverage
 .remember/
 .DS_Store
+.impeccable
+.env
+.env.local
+.env.*.local

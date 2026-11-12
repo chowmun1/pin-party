@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Save, X } from 'lucide-react';
 import { APP_NAME } from '../config';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import {
   DESCRIPTION_MAX,
   TITLE_MAX,
@@ -37,8 +39,9 @@ export default function EditorPage() {
   const [showValidation, setShowValidation] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string>();
+  const [photoToDelete, setPhotoToDelete] = useState<string | null>(null);
 
-  const allowLeave = useUnsavedChangesWarning(dirty);
+  const { allowLeave, prompt: leavePrompt } = useUnsavedChangesWarning(dirty);
   const titleId = useId();
   const descId = useId();
 
@@ -51,7 +54,7 @@ export default function EditorPage() {
       .then((quiz) => {
         if (cancelled) return;
         if (!quiz) {
-          setLoad({ status: 'error', message: "This quiz doesn't exist (it may have been deleted)." });
+          setLoad({ status: 'error', message: "This quiz doesn't exist any more. It may have been deleted." });
           return;
         }
         const d = draftFromQuiz(quiz);
@@ -105,6 +108,7 @@ export default function EditorPage() {
           id: newId(),
           imageBlob: blob,
           caption: '',
+          answerName: '',
           lat: gps?.lat ?? null,
           lng: gps?.lng ?? null,
           fromExif: !!gps,
@@ -125,9 +129,11 @@ export default function EditorPage() {
     update((d) => ({ ...d, photos: moveItem(d.photos, index, index + delta) }));
   }
 
-  function deletePhoto(photoId: string) {
+  function deletePhoto() {
+    const photoId = photoToDelete;
+    setPhotoToDelete(null);
+    if (!photoId) return;
     const idx = draft.photos.findIndex((p) => p.id === photoId);
-    if (!window.confirm(`Remove photo ${idx + 1} from this quiz?`)) return;
     const remaining = draft.photos.filter((p) => p.id !== photoId);
     update((d) => ({ ...d, photos: d.photos.filter((p) => p.id !== photoId) }));
     if (selectedId === photoId) {
@@ -159,14 +165,14 @@ export default function EditorPage() {
     }
   }
 
-  if (load.status === 'loading') return <p className="muted">Loading quiz…</p>;
+  if (load.status === 'loading') return <p className="on-ground">Loading quiz…</p>;
   if (load.status === 'error') {
     return (
-      <section className="panel center">
-        <h1>Can't open this quiz</h1>
-        <p>{load.message}</p>
-        <Link to="/" className="btn btn-primary">
-          Back to home
+      <section className="postcard-back lone-card">
+        <h1 className="display">Can't open this quiz</h1>
+        <p className="lead">{load.message}</p>
+        <Link to="/" className="btn btn-primary btn-lg">
+          Back to your quizzes
         </Link>
       </section>
     );
@@ -175,16 +181,18 @@ export default function EditorPage() {
   const selectedIndex = draft.photos.findIndex((p) => p.id === selectedId);
   const selected = selectedIndex >= 0 ? draft.photos[selectedIndex] : null;
   const busy = progress !== null || saving;
+  const deleteIndex = draft.photos.findIndex((p) => p.id === photoToDelete);
 
   return (
     <section className="editor">
       <div className="page-head">
-        <h1>{isNew ? 'New quiz' : 'Edit quiz'}</h1>
+        <h1 className="display">{isNew ? 'New quiz' : 'Edit quiz'}</h1>
         <div className="row">
-          <Link to="/" className="btn">
+          <Link to="/" className="btn btn-on-ground">
             Cancel
           </Link>
           <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>
+            <Save aria-hidden="true" />
             {saving ? 'Saving…' : 'Save quiz'}
           </button>
         </div>
@@ -198,26 +206,26 @@ export default function EditorPage() {
       {showValidation && !validation.ok && (
         <div className="notice notice-error" role="alert">
           <span>
-            Can't save yet: {[validation.titleError, validation.photosError].filter(Boolean).join(' ')}
+            Not quite ready to save: {[validation.titleError, validation.photosError].filter(Boolean).join(' ')}
           </span>
         </div>
       )}
 
-      <div className="panel editor-meta">
+      <div className="sheet editor-meta">
         <label htmlFor={titleId} className="label">
           Quiz title
         </label>
         <input
           id={titleId}
-          className={`input input-big${showValidation && validation.titleError ? ' input-invalid' : ''}`}
+          className={`input input-title${showValidation && validation.titleError ? ' input-invalid' : ''}`}
           value={draft.title}
           maxLength={TITLE_MAX}
-          placeholder="e.g. Our summer holidays"
+          placeholder="e.g. Our summer in Italy"
           aria-invalid={showValidation && !!validation.titleError}
           onChange={(e) => update((d) => ({ ...d, title: e.target.value }))}
         />
         <label htmlFor={descId} className="label">
-          Description <span className="muted">(optional)</span>
+          Description <span className="optional">(optional)</span>
         </label>
         <textarea
           id={descId}
@@ -225,19 +233,20 @@ export default function EditorPage() {
           rows={2}
           value={draft.description}
           maxLength={DESCRIPTION_MAX}
+          placeholder="A line to show on the postcard"
           onChange={(e) => update((d) => ({ ...d, description: e.target.value }))}
         />
       </div>
 
-      <h2 className="section-title">
-        Photos <span className="muted">({draft.photos.length})</span>
+      <h2 className="section-title on-ground">
+        Photos <span className="count">{draft.photos.length}</span>
       </h2>
 
       <DropZone onFiles={addFiles} disabled={busy} />
 
       {progress && (
         <p className="notice notice-info" role="status">
-          Processing photo {Math.min(progress.done + 1, progress.total)} of {progress.total}…
+          Getting photo {Math.min(progress.done + 1, progress.total)} of {progress.total} ready…
         </p>
       )}
       {uploadErrors.length > 0 && (
@@ -252,8 +261,8 @@ export default function EditorPage() {
               ))}
             </ul>
           </div>
-          <button className="btn-link" onClick={() => setUploadErrors([])} aria-label="Dismiss">
-            ✕
+          <button className="btn btn-ghost btn-icon" onClick={() => setUploadErrors([])} aria-label="Dismiss">
+            <X aria-hidden="true" />
           </button>
         </div>
       )}
@@ -266,7 +275,7 @@ export default function EditorPage() {
             highlightMissing={showValidation}
             onSelect={setSelectedId}
             onMove={movePhoto}
-            onDelete={deletePhoto}
+            onDelete={setPhotoToDelete}
           />
           {selected ? (
             <PhotoDetail
@@ -276,10 +285,23 @@ export default function EditorPage() {
               onChange={updatePhoto}
             />
           ) : (
-            <div className="panel center muted">Select a photo to set its answer.</div>
+            <div className="sheet empty-detail">Pick a photo on the left to set where it was taken.</div>
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!photoToDelete}
+        title={`Remove photo ${deleteIndex + 1}?`}
+        confirmLabel="Remove photo"
+        cancelLabel="Keep it"
+        danger
+        onConfirm={deletePhoto}
+        onCancel={() => setPhotoToDelete(null)}
+      >
+        <p>It will be taken out of this quiz when you save.</p>
+      </ConfirmDialog>
+      {leavePrompt}
     </section>
   );
 }

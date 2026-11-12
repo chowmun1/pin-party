@@ -1,4 +1,4 @@
-import { APP_NAME, EXPORT_FORMAT_VERSION } from '../config';
+import { ANSWER_NAME_MAX, APP_NAME, CAPTION_MAX, EXPORT_FORMAT_VERSION } from '../config';
 import { newId, type Photo, type Quiz } from '../types';
 
 /**
@@ -20,6 +20,7 @@ export interface QuizExportFile {
 
 interface ExportedPhoto {
   caption?: string;
+  answerName?: string;
   lat: number;
   lng: number;
   mimeType: string;
@@ -71,6 +72,7 @@ export async function quizToExportFile(quiz: Quiz): Promise<QuizExportFile> {
       photos: await Promise.all(
         quiz.photos.map(async (p) => ({
           ...(p.caption ? { caption: p.caption } : {}),
+          ...(p.answerName ? { answerName: p.answerName } : {}),
           lat: p.lat,
           lng: p.lng,
           mimeType: p.imageBlob.type || 'image/jpeg',
@@ -110,6 +112,10 @@ export async function downloadQuiz(quiz: Quiz): Promise<void> {
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** Trimmed, length-limited text, or undefined when empty / not a string. */
+const cleanText = (v: unknown, max: number): string | undefined =>
+  typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : undefined;
 
 const isLat = (v: unknown): v is number =>
   typeof v === 'number' && Number.isFinite(v) && v >= -90 && v <= 90;
@@ -163,8 +169,16 @@ export function parseExportFile(json: unknown): Quiz {
     } catch {
       throw new ImportError(`Photo ${n} has corrupted image data.`);
     }
-    const caption = typeof raw.caption === 'string' && raw.caption.trim() ? raw.caption : undefined;
-    return { id: newId(), imageBlob, lat: raw.lat, lng: raw.lng, ...(caption ? { caption } : {}) };
+    const caption = cleanText(raw.caption, CAPTION_MAX);
+    const answerName = cleanText(raw.answerName, ANSWER_NAME_MAX);
+    return {
+      id: newId(),
+      imageBlob,
+      lat: raw.lat,
+      lng: raw.lng,
+      ...(caption ? { caption } : {}),
+      ...(answerName ? { answerName } : {}),
+    };
   });
 
   return {

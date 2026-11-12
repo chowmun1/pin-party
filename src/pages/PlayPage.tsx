@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { APP_NAME } from '../config';
 import type { DistanceUnit } from '../game/format';
 import { buildPlayers } from '../game/players';
-import { createGame, currentPlayer, currentRound, gameReducer, type GameAction, type GameState } from '../game/state';
+import { createGame, currentPlayer, currentRound, gameReducer, playerById, type GameAction, type GameState } from '../game/state';
 import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning';
 import { friendlyError } from '../lib/errors';
 import { readPref, writePref } from '../lib/prefs';
@@ -29,7 +29,12 @@ export default function PlayPage() {
   const [unit, setUnit] = useState<DistanceUnit>(() => readPref('unit', ['km', 'mi'] as const, 'km'));
 
   const inProgress = !!game && game.phase !== 'finished';
-  useUnsavedChangesWarning(inProgress, 'A game is in progress. Leave and lose the scores?');
+  const { prompt: leavePrompt } = useUnsavedChangesWarning(inProgress, {
+    title: 'Leave this game?',
+    body: "Everyone's scores will be lost. Your saved quiz stays safe.",
+    leaveLabel: 'Leave game',
+    stayLabel: 'Keep playing',
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -72,67 +77,88 @@ export default function PlayPage() {
     writePref('unit', u);
   }
 
-  if (load.status === 'loading') return <p className="muted">Loading quiz…</p>;
+  if (load.status === 'loading') return <p className="on-ground">Loading quiz…</p>;
   if (load.status === 'error') {
     return (
-      <section className="panel center">
-        <h1>Can't start this game</h1>
-        <p>{load.message}</p>
-        <Link to="/" className="btn btn-primary">
-          Back to home
+      <section className="postcard-back lone-card">
+        <h1 className="display">Can't start this game</h1>
+        <p className="lead">{load.message}</p>
+        <Link to="/" className="btn btn-primary btn-lg">
+          Back to your quizzes
         </Link>
       </section>
     );
   }
 
-  if (!game) return <SetupScreen quiz={load.quiz} initial={lastSetup} onStart={start} />;
-
-  if (game.phase === 'finished') {
-    return (
-      <ResultsScreen
-        state={game}
-        photosById={photosById}
-        unit={unit}
-        onUnitChange={changeUnit}
-        // Same players and settings; photos are reshuffled if shuffle was on.
-        onPlayAgain={() => lastSetup && start(lastSetup)}
-        onChangePlayers={() => setGame(null)}
-      />
-    );
-  }
-
-  const round = currentRound(game);
-  const photo = photosById.get(round.photoId)!;
-  const roundLabel = `Round ${game.roundIndex + 1} of ${game.rounds.length}`;
-
-  if (game.phase === 'reveal') {
-    return (
-      <RevealScreen
-        key={game.roundIndex}
-        state={game}
-        photo={photo}
-        roundLabel={roundLabel}
-        unit={unit}
-        onUnitChange={changeUnit}
-        onNext={() => dispatch({ type: 'nextRound' })}
-      />
-    );
-  }
-
-  const player = currentPlayer(game)!;
-
-  if (game.phase === 'handoff') {
-    return <HandoffScreen player={player} roundLabel={roundLabel} onReady={() => dispatch({ type: 'ready' })} />;
-  }
-
   return (
-    <GuessScreen
-      // New key per turn: fresh map view, no previous pin.
-      key={`${game.roundIndex}-${round.guesses.length}`}
-      photo={photo}
-      roundLabel={roundLabel}
-      player={player}
-      onLock={(guess) => dispatch({ type: 'lockGuess', guess })}
-    />
+    <>
+      {renderScreen()}
+      {leavePrompt}
+    </>
   );
+
+  function renderScreen() {
+    if (!game)
+      return (
+        quiz && (
+          <SetupScreen quiz={quiz} initial={lastSetup} unit={unit} onUnitChange={changeUnit} onStart={start} />
+        )
+      );
+
+    if (game.phase === 'finished') {
+      return (
+        <ResultsScreen
+          state={game}
+          photosById={photosById}
+          unit={unit}
+          // Same players and settings; photos are reshuffled if shuffle was on.
+          onPlayAgain={() => lastSetup && start(lastSetup)}
+          onChangePlayers={() => setGame(null)}
+        />
+      );
+    }
+
+    const round = currentRound(game);
+    const photo = photosById.get(round.photoId)!;
+    const roundNo = game.roundIndex + 1;
+    const rounds = game.rounds.length;
+
+    if (game.phase === 'reveal') {
+      return (
+        <RevealScreen
+          key={game.roundIndex}
+          state={game}
+          photo={photo}
+          unit={unit}
+          onNext={() => dispatch({ type: 'nextRound' })}
+        />
+      );
+    }
+
+    const player = currentPlayer(game)!;
+
+    if (game.phase === 'handoff') {
+      return (
+        <HandoffScreen
+          player={player}
+          previous={playerById(game, round.turnOrder[round.guesses.length - 1])}
+          round={roundNo}
+          rounds={rounds}
+          onReady={() => dispatch({ type: 'ready' })}
+        />
+      );
+    }
+
+    return (
+      <GuessScreen
+        // New key per turn: fresh map view, no previous pin.
+        key={`${game.roundIndex}-${round.guesses.length}`}
+        photo={photo}
+        round={roundNo}
+        rounds={rounds}
+        player={player}
+        onLock={(guess) => dispatch({ type: 'lockGuess', guess })}
+      />
+    );
+  }
 }

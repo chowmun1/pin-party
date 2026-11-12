@@ -1,3 +1,4 @@
+import { AlertTriangle, ArrowDown, ArrowUp, Check, Trash2 } from 'lucide-react';
 import { useObjectUrl } from '../hooks/useObjectUrl';
 import { hasPin, type DraftPhoto } from './draft';
 
@@ -60,6 +61,7 @@ function PhotoListItem({
   const cls = ['photo-item', selected && 'selected', !pinned && highlightMissing && 'missing']
     .filter(Boolean)
     .join(' ');
+  const name = photo.answerName.trim();
 
   return (
     <li className={cls}>
@@ -68,43 +70,46 @@ function PhotoListItem({
         className="photo-item-main"
         onClick={() => onSelect(photo.id)}
         aria-current={selected ? 'true' : undefined}
-        aria-label={`Photo ${n}${photo.caption ? `: ${photo.caption}` : ''}. ${pinned ? 'Answer set' : 'Needs answer pin'}`}
+        aria-label={`Photo ${n}${name ? `, ${name}` : ''}. ${pinned ? 'Location set' : 'Needs a location'}`}
       >
         <span className="photo-item-thumb">{url && <img src={url} alt="" />}</span>
         <span className="photo-item-text">
-          <span className="photo-item-num">Photo {n}</span>
-          <span className={pinned ? 'status-ok' : 'status-warn'}>{pinned ? '✓ Pinned' : '⚠ Needs pin'}</span>
+          <span className="photo-item-num">{name || `Photo ${n}`}</span>
+          <span className={pinned ? 'status status-ok' : 'status status-warn'}>
+            {pinned ? <Check aria-hidden="true" /> : <AlertTriangle aria-hidden="true" />}
+            {pinned ? 'Location set' : 'Needs a location'}
+          </span>
         </span>
       </button>
       <div className="photo-item-actions">
         <button
           type="button"
-          className="icon-btn"
+          className="btn btn-secondary btn-icon"
           onClick={() => onMove(index, -1)}
           disabled={index === 0}
           aria-label={`Move photo ${n} up`}
           title="Move up"
         >
-          ▲
+          <ArrowUp aria-hidden="true" />
         </button>
         <button
           type="button"
-          className="icon-btn"
+          className="btn btn-secondary btn-icon"
           onClick={() => onMove(index, 1)}
           disabled={index === count - 1}
           aria-label={`Move photo ${n} down`}
           title="Move down"
         >
-          ▼
+          <ArrowDown aria-hidden="true" />
         </button>
         <button
           type="button"
-          className="icon-btn icon-btn-danger"
+          className="btn btn-secondary btn-icon btn-icon-danger"
           onClick={() => onDelete(photo.id)}
-          aria-label={`Delete photo ${n}`}
-          title="Delete"
+          aria-label={`Remove photo ${n}`}
+          title="Remove"
         >
-          ✕
+          <Trash2 aria-hidden="true" />
         </button>
       </div>
     </li>

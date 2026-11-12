@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
+import { Crosshair, LocateFixed } from 'lucide-react';
 import { BaseMap } from '../map/BaseMap';
 import { answerIcon } from '../map/icons';
 import { FlyTo, type MapTarget } from '../map/MapControls';
@@ -47,24 +48,28 @@ export function LocationPicker({
         <PinPlacer value={value} onChange={onChange} icon={icon} title="Answer location (drag to adjust)" />
         <FlyTo target={target} />
       </BaseMap>
-      <div className="row wrap map-footer">
-        <span className="muted" aria-live="polite">
+      <div className="map-footer">
+        <span className="help" aria-live="polite">
           {value
-            ? `Answer: ${value.lat.toFixed(4)}, ${value.lng.toFixed(4)}`
-            : 'Click the map to set the answer location.'}
+            ? 'Location set. Drag the pin to adjust it.'
+            : 'Click the map where the photo was taken.'}
         </span>
-        <button type="button" className="btn btn-small" onClick={pinAtCenter}>
-          Place pin at map centre
-        </button>
-        {value && (
-          <button
-            type="button"
-            className="btn btn-small"
-            onClick={() => setTarget({ kind: 'point', lat: value.lat, lng: value.lng })}
-          >
-            Show pin
+        <div className="row wrap">
+          <button type="button" className="btn btn-secondary" onClick={pinAtCenter}>
+            <Crosshair aria-hidden="true" />
+            Drop pin at map centre
           </button>
-        )}
+          {value && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setTarget({ kind: 'point', lat: value.lat, lng: value.lng })}
+            >
+              <LocateFixed aria-hidden="true" />
+              Zoom to pin
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

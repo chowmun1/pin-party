@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { ImagePlus } from 'lucide-react';
 
 /** Click-or-drop area for adding photos. */
 export function DropZone({ onFiles, disabled }: { onFiles: (files: File[]) => void; disabled?: boolean }) {
@@ -21,12 +22,10 @@ export function DropZone({ onFiles, disabled }: { onFiles: (files: File[]) => vo
         if (!disabled && e.dataTransfer.files.length) onFiles(Array.from(e.dataTransfer.files));
       }}
     >
-      <p className="dropzone-text">
-        <strong>Drag & drop photos here</strong>
-        <span className="muted"> or</span>
-      </p>
+      <ImagePlus className="dropzone-icon" aria-hidden="true" />
+      <p className="dropzone-text">Drop your trip photos here</p>
       <button type="button" className="btn btn-primary" onClick={() => input.current?.click()} disabled={disabled}>
-        Choose photos…
+        Choose photos
       </button>
       <input
         ref={input}
@@ -40,7 +39,9 @@ export function DropZone({ onFiles, disabled }: { onFiles: (files: File[]) => vo
           if (files.length) onFiles(files);
         }}
       />
-      <p className="muted small">Photos are shrunk to save space. GPS locations in photos are used to pre-fill answers.</p>
+      <p className="help">
+        Photos are shrunk to save space. If a photo knows where it was taken, we'll place its pin for you.
+      </p>
     </div>
   );
 }

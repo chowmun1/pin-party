@@ -6,7 +6,10 @@ export interface LatLng {
 export interface Photo extends LatLng {
   id: string;
   imageBlob: Blob;
+  /** Hint shown to players while they guess. */
   caption?: string;
+  /** Place name revealed with the answer, e.g. "Lake Como, Italy". */
+  answerName?: string;
 }
 
 export interface Quiz {

@@ -1,8 +1,9 @@
 import { useCallback, useId } from 'react';
+import { MapPin } from 'lucide-react';
 import { LocationPicker } from '../components/LocationPicker';
 import { useObjectUrl } from '../hooks/useObjectUrl';
 import type { LatLng } from '../types';
-import { CAPTION_MAX, hasPin, type DraftPhoto } from './draft';
+import { ANSWER_NAME_MAX, CAPTION_MAX, hasPin, type DraftPhoto } from './draft';
 
 export function PhotoDetail({
   photo,
@@ -17,6 +18,9 @@ export function PhotoDetail({
 }) {
   const url = useObjectUrl(photo.imageBlob);
   const captionId = useId();
+  const nameId = useId();
+  const nameHelpId = useId();
+  const captionHelpId = useId();
   const { id } = photo;
 
   const setPin = useCallback(
@@ -25,29 +29,55 @@ export function PhotoDetail({
   );
 
   return (
-    <div className="photo-detail panel">
-      <h2>Photo {index + 1}</h2>
-      <div className="photo-preview">{url && <img src={url} alt={`Photo ${index + 1} preview`} />}</div>
+    <div className="photo-detail sheet">
+      <h2 className="sheet-title">Photo {index + 1}</h2>
+      <div className="photo-detail-top">
+        <div className="photo-frame">{url && <img src={url} alt={`Photo ${index + 1}`} />}</div>
+        <div className="photo-detail-fields">
+          <label htmlFor={nameId} className="label">
+            Place name <span className="optional">(optional)</span>
+          </label>
+          <input
+            id={nameId}
+            className="input"
+            value={photo.answerName}
+            maxLength={ANSWER_NAME_MAX}
+            placeholder="e.g. Lake Como, Italy"
+            aria-describedby={nameHelpId}
+            onChange={(e) => onChange(id, { answerName: e.target.value })}
+          />
+          <p id={nameHelpId} className="help">
+            Kept secret until the reveal.
+          </p>
 
-      <label htmlFor={captionId} className="label">
-        Caption / hint <span className="muted">(optional, shown to players)</span>
-      </label>
-      <input
-        id={captionId}
-        className="input"
-        value={photo.caption}
-        maxLength={CAPTION_MAX}
-        placeholder="e.g. “Somewhere sunny in Europe”"
-        onChange={(e) => onChange(id, { caption: e.target.value })}
-      />
+          <label htmlFor={captionId} className="label">
+            Hint <span className="optional">(optional)</span>
+          </label>
+          <input
+            id={captionId}
+            className="input"
+            value={photo.caption}
+            maxLength={CAPTION_MAX}
+            placeholder="e.g. We ate the best pizza here"
+            aria-describedby={captionHelpId}
+            onChange={(e) => onChange(id, { caption: e.target.value })}
+          />
+          <p id={captionHelpId} className="help">
+            Shown to players while they guess.
+          </p>
+        </div>
+      </div>
 
-      <h3 className="label">Answer location</h3>
+      <h3 className="label label-lg">Where was it taken?</h3>
       {photo.fromExif && (
-        <p className="notice-inline">📍 Pre-filled from the photo's GPS data — drag the pin if it's off.</p>
+        <p className="notice-inline">
+          <MapPin aria-hidden="true" />
+          Filled in from the photo's location data. Drag the pin if it's a little off.
+        </p>
       )}
       {showMissing && !hasPin(photo) && (
         <p className="field-error" role="alert">
-          Set the answer pin for this photo before saving.
+          Click the map to show where this photo was taken.
         </p>
       )}
       {/* key: remount the map per photo so it starts centred on that photo's pin */}

@@ -1,12 +1,13 @@
 import { useMemo, useRef, useState } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
+import { Crosshair, Lock } from 'lucide-react';
+import { Stamp } from '../components/Stamp';
 import type { Player } from '../game/players';
 import { BaseMap } from '../map/BaseMap';
 import { pinIcon } from '../map/icons';
 import { PinPlacer } from '../map/PinPlacer';
 import type { LatLng, Photo } from '../types';
 import { PhotoStage } from './PhotoStage';
-import { PlayerChip } from './PlayerChip';
 
 /**
  * One player's turn. The parent remounts this per turn (via `key`), which
@@ -14,18 +15,21 @@ import { PlayerChip } from './PlayerChip';
  */
 export function GuessScreen({
   photo,
-  roundLabel,
+  round,
+  rounds,
   player,
   onLock,
 }: {
   photo: Photo;
-  roundLabel: string;
+  round: number;
+  rounds: number;
   player: Player;
   onLock: (guess: LatLng) => void;
 }) {
   const [pin, setPin] = useState<LatLng | null>(null);
   const mapRef = useRef<LeafletMap>(null);
   const icon = useMemo(() => pinIcon({ color: player.color, label: player.name }), [player]);
+  const roundLabel = `Round ${round} of ${rounds}`;
 
   function pinAtCenter() {
     const c = mapRef.current?.getCenter().wrap();
@@ -34,42 +38,45 @@ export function GuessScreen({
 
   return (
     <section className="play">
-      <div className="turn-banner" style={{ ['--player-color' as string]: player.color }}>
-        <span className="round-label">{roundLabel}</span>
+      <div className="turn-plate">
         <h1 className="turn-title">
-          <PlayerChip player={player} big />
-          <span>’s turn</span>
+          <span className="turn-to" aria-hidden="true">
+            To:
+          </span>
+          <span className="player-dot player-dot-lg" style={{ background: player.color }} aria-hidden="true" />
+          <span className="turn-name hand">{player.name}</span>
+          <span className="turn-suffix">your turn</span>
         </h1>
+        <Stamp color="var(--sun)" tilt={3} className="round-stamp">
+          <span className="sr-only">{roundLabel}</span>
+          <span aria-hidden="true" className="stamp-label">
+            Round
+          </span>
+          <span aria-hidden="true" className="stamp-num">
+            {round}/{rounds}
+          </span>
+        </Stamp>
       </div>
 
       <div className="play-grid">
         <PhotoStage photo={photo} roundLabel={roundLabel} />
 
         <div className="guess-panel">
-          <BaseMap
-            mapRef={mapRef}
-            className="map map-play"
-            label={`Guess map for ${player.name}. Click to place your pin.`}
-          >
+          <p className="guess-instruction on-ground" aria-live="polite">
+            {pin ? 'Happy with that? Drag the pin to fine-tune it.' : 'Tap the map where you think this photo was taken.'}
+          </p>
+          <BaseMap mapRef={mapRef} className="map map-play" label={`Guess map for ${player.name}. Click to place your pin.`}>
             <PinPlacer value={pin} onChange={setPin} icon={icon} title={`${player.name}'s guess (drag to adjust)`} />
           </BaseMap>
           <div className="guess-actions">
-            <p className="muted" aria-live="polite">
-              {pin ? 'Happy with it? Drag the pin to adjust.' : 'Tap the map where you think this photo was taken.'}
-            </p>
-            <div className="row wrap">
-              <button type="button" className="btn btn-small" onClick={pinAtCenter}>
-                Pin at map centre
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary btn-big"
-                disabled={!pin}
-                onClick={() => pin && onLock(pin)}
-              >
-                🔒 Lock in guess
-              </button>
-            </div>
+            <button type="button" className="btn btn-on-ground" onClick={pinAtCenter}>
+              <Crosshair aria-hidden="true" />
+              Drop pin at map centre
+            </button>
+            <button type="button" className="btn btn-primary btn-lg" disabled={!pin} onClick={() => pin && onLock(pin)}>
+              <Lock aria-hidden="true" />
+              Lock in my guess
+            </button>
           </div>
         </div>
       </div>

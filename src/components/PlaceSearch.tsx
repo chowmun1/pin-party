@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { Search } from 'lucide-react';
 import { searchPlaces, type PlaceResult } from '../lib/geocode';
 
 /** Search box that looks up place names (Nominatim) and reports the chosen one. */
@@ -34,7 +35,7 @@ export function PlaceSearch({ onPick }: { onPick: (place: PlaceResult) => void }
 
   return (
     <div className="place-search">
-      <form onSubmit={submit} className="row" role="search">
+      <form onSubmit={submit} className="search-row" role="search">
         <label htmlFor={inputId} className="sr-only">
           Search for a place
         </label>
@@ -42,12 +43,13 @@ export function PlaceSearch({ onPick }: { onPick: (place: PlaceResult) => void }
           id={inputId}
           className="input"
           type="search"
-          placeholder="Search a place to jump the map…"
+          placeholder="Search for a town, landmark or country"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-controls={results ? listId : undefined}
         />
-        <button className="btn" type="submit" disabled={loading || !query.trim()}>
+        <button className="btn btn-secondary" type="submit" disabled={loading || !query.trim()}>
+          <Search aria-hidden="true" />
           {loading ? 'Searching…' : 'Search'}
         </button>
       </form>
@@ -59,7 +61,7 @@ export function PlaceSearch({ onPick }: { onPick: (place: PlaceResult) => void }
       {results && (
         <ul id={listId} className="search-results" aria-label="Search results">
           {results.length === 0 ? (
-            <li className="muted">No places found.</li>
+            <li className="search-empty">No places found. Try a nearby town or the country.</li>
           ) : (
             results.map((r, i) => (
               <li key={`${r.lat},${r.lng},${i}`}>

@@ -10,7 +10,7 @@ const sampleQuiz = (): Quiz => ({
   description: 'Summer 2026',
   createdAt: 123,
   photos: [
-    { id: 'p1', imageBlob: new Blob([bytes], { type: 'image/jpeg' }), lat: 48.85, lng: 2.35, caption: 'Hint' },
+    { id: 'p1', imageBlob: new Blob([bytes], { type: 'image/jpeg' }), lat: 48.85, lng: 2.35, caption: 'Hint', answerName: 'Paris, France' },
     { id: 'p2', imageBlob: new Blob([bytes], { type: 'image/png' }), lat: -33.86, lng: 151.21 },
   ],
 });
@@ -27,6 +27,8 @@ describe('export → import round trip', () => {
     expect(quiz.photos).toHaveLength(2);
     expect(quiz.photos[0].caption).toBe('Hint');
     expect(quiz.photos[1].caption).toBeUndefined();
+    expect(quiz.photos[0].answerName).toBe('Paris, France');
+    expect(quiz.photos[1].answerName).toBeUndefined();
     expect(quiz.photos[1]).toMatchObject({ lat: -33.86, lng: 151.21 });
     expect(quiz.photos[1].imageBlob.type).toBe('image/png');
     expect(new Uint8Array(await quiz.photos[0].imageBlob.arrayBuffer())).toEqual(bytes);

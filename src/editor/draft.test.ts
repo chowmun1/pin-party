@@ -5,6 +5,7 @@ const photo = (id: string, pinned = true): DraftPhoto => ({
   id,
   imageBlob: new Blob(['x']),
   caption: '',
+  answerName: '',
   lat: pinned ? 10 : null,
   lng: pinned ? 20 : null,
 });
@@ -42,12 +43,14 @@ describe('draftToQuiz / draftFromQuiz', () => {
       ...emptyDraft(),
       title: '  Trip  ',
       description: ' desc ',
-      photos: [{ ...photo('a'), caption: '  hint ' }, photo('b')],
+      photos: [{ ...photo('a'), caption: '  hint ', answerName: ' Lake Como ' }, photo('b')],
     };
     const q = draftToQuiz(d);
     expect(q.title).toBe('Trip');
     expect(q.description).toBe('desc');
     expect(q.photos[0].caption).toBe('hint');
+    expect(q.photos[0].answerName).toBe('Lake Como');
+    expect('answerName' in q.photos[1]).toBe(false);
     expect('caption' in q.photos[1]).toBe(false);
     const back = draftFromQuiz(q);
     expect(back.photos[1].caption).toBe('');

@@ -1,8 +1,8 @@
 import { createHashRouter, useParams } from 'react-router-dom';
 import App from './App';
-import ComingSoonPage from './pages/ComingSoonPage';
 import EditorPage from './pages/EditorPage';
 import HomePage from './pages/HomePage';
+import NotFoundPage from './pages/NotFoundPage';
 import PlayPage from './pages/PlayPage';
 
 /** Remount the editor when switching between quizzes so state never leaks across. */
@@ -28,7 +28,7 @@ export const router = createHashRouter([
       { path: '/quiz/new', element: <KeyedEditor /> },
       { path: '/quiz/:id/edit', element: <KeyedEditor /> },
       { path: '/quiz/:id/play', element: <KeyedPlay /> },
-      { path: '*', element: <ComingSoonPage what="This page" /> },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ]);

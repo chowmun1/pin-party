@@ -1,0 +1,62 @@
+# Builds the app and publishes it to GitHub Pages on every push to main.
+# One-time setup on GitHub:
+#   1. Settings → Pages → Build and deployment → Source: "GitHub Actions".
+#   2. Settings → Secrets and variables → Actions → New repository secret:
+#      name VITE_ARCGIS_API_KEY, value = your ArcGIS key (optional; without it
+#      the map falls back to OpenStreetMap tiles).
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # allows a manual run from the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; a newer push cancels an older queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_ARCGIS_API_KEY: ${{ secrets.VITE_ARCGIS_API_KEY }}
+
+      - name: Upload the built site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

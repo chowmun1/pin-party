@@ -7,21 +7,23 @@ export interface Player {
 }
 
 /**
- * 12 distinct colours, all dark enough for white label text (WCAG AA).
- * Green is avoided because the answer pin is green.
+ * 12 distinct ink colours, each AA (>= 5.2:1) with white label text, spread
+ * across the hue wheel so neighbours stay distinguishable across a room.
+ * Yellow is reserved for the answer pin and red for the main button, so no
+ * player is yellow or red.
  */
 export const PLAYER_COLORS = [
-  '#d62828', // red
-  '#1d4ed8', // blue
-  '#c2410c', // orange
-  '#7e22ce', // purple
-  '#be185d', // pink
-  '#0e7490', // teal
-  '#854d0e', // brown
-  '#334155', // slate
-  '#a21caf', // fuchsia
-  '#4d7c0f', // olive
-  '#0369a1', // sky
+  '#1d4e9e', // blue
+  '#1f7a3f', // green
+  '#b84a00', // orange
+  '#6a2c91', // purple
+  '#00707a', // teal
+  '#b0186b', // magenta
+  '#7a4a1e', // brown
+  '#3d4a5c', // slate
+  '#5c6b00', // olive
+  '#8a6100', // gold
+  '#4338ca', // indigo
   '#111111', // black
 ] as const;
 

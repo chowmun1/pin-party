@@ -81,9 +81,9 @@ export function buildDemoQuiz(): Quiz {
     description: `A tiny sample quiz to try ${APP_NAME}. Make your own with real photos!`,
     createdAt: Date.now(),
     photos: [
-      { id: newId(), imageBlob: svgBlob(PYRAMIDS), caption: 'An ancient wonder in the desert', lat: 29.9792, lng: 31.1342 },
-      { id: newId(), imageBlob: svgBlob(FUJI), caption: 'Snow-capped volcano in cherry blossom season', lat: 35.3606, lng: 138.7274 },
-      { id: newId(), imageBlob: svgBlob(BRIDGE), caption: 'A famous red bridge, often wrapped in fog', lat: 37.8199, lng: -122.4783 },
+      { id: newId(), imageBlob: svgBlob(PYRAMIDS), caption: 'An ancient wonder in the desert', answerName: 'The Pyramids of Giza, Egypt', lat: 29.9792, lng: 31.1342 },
+      { id: newId(), imageBlob: svgBlob(FUJI), caption: 'Snow-capped volcano in cherry blossom season', answerName: 'Mount Fuji, Japan', lat: 35.3606, lng: 138.7274 },
+      { id: newId(), imageBlob: svgBlob(BRIDGE), caption: 'A famous red bridge, often wrapped in fog', answerName: 'Golden Gate Bridge, San Francisco', lat: 37.8199, lng: -122.4783 },
     ],
   };
 }
